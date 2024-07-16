@@ -1,17 +1,18 @@
 import java.lang.Math;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Character {
-    String name;
-    int healthPoints;
-    int attackPoints;
-    int maxHp;
-    int armor;
-    int experiencePoints;
-    int expToGain;
-    int level = 1;
-    String characterType;
-    boolean critChance = false;
+    public String name;
+    public int healthPoints;
+    public int attackPoints;
+    public int maxHp;
+    public int armor;
+    public int experiencePoints;
+    public int expToGain;
+    public int level = 1;
+    public String characterType;
+    private boolean critChance = false;
     private static int skillCooldown = 0;
     private static int regenCooldown = 0;
 
@@ -33,36 +34,48 @@ public class Character {
     }
 
     public void chooseRole() {
-        System.out.println("pilih role dan atribut untuk karaktermu");
-        System.out.println("===========================================");
-        System.out.println("1. Assassin (High Damage, Low hp)");
-        System.out.println("2. Giant (Low Damage, High hp)");
-        System.out.println("3. Prince (Moderate Damage, Moderate hp)");
-        System.out.print("Pilih: ");
-        Scanner scn = new Scanner(System.in);
-        int choice = scn.nextInt();
+        boolean inputValid = false;
+        while (!inputValid) {
+            try {
+                System.out.println("pilih role dan atribut untuk karaktermu");
+                System.out.println("===========================================");
+                System.out.println("1. Assassin (High Damage, Low hp)");
+                System.out.println("2. Giant (Low Damage, High hp)");
+                System.out.println("3. Prince (Moderate Damage, Moderate hp)");
+                System.out.print("Pilih: ");
+                Scanner scn = new Scanner(System.in);
+                int choice = scn.nextInt();
 
-        switch (choice) {
-            case 1:
-                setCharacterType("Assassin");
-                setArmor(4);
-                setHealthPoints(100);
-                setAttackPoints(20);
-                break;
-            case 2:
-                setCharacterType("Giant");
-                setArmor(7);
-                setHealthPoints(180);
-                setAttackPoints(7);
-                break;
-            case 3:
-                setCharacterType("Prince");
-                setArmor(5);
-                setHealthPoints(120);
-                setAttackPoints(12);
-                break;
-            default:
-                break;
+                switch (choice) {
+                    case 1:
+                        setCharacterType("Assassin");
+                        setArmor(4);
+                        setHealthPoints(100);
+                        setAttackPoints(20);
+                        break;
+                    case 2:
+                        setCharacterType("Giant");
+                        setArmor(6);
+                        setHealthPoints(180);
+                        setAttackPoints(7);
+                        break;
+                    case 3:
+                        setCharacterType("Prince");
+                        setArmor(5);
+                        setHealthPoints(120);
+                        setAttackPoints(12);
+                        break;
+                    default:
+                        break;
+                }
+                if (choice < 1 || choice > 3) {
+                    System.out.println("input salah");
+                } else {
+                    inputValid = true;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("input angka!!");
+            }
         }
     }
 
@@ -152,6 +165,7 @@ public class Character {
                     isEntered = false;
                 }
             }
+            System.out.println("Kamu berhasil menyerang " + target.getName());
             System.err.println("Hasil lemparan: " + rollDamage);
             int totalDamage = rollDamage + attackPoints;
             if (critChance) {
@@ -205,13 +219,17 @@ public class Character {
 
     public void regenerate() {
         if (regenCooldown == 0) {
-
             healthPoints += 20;
             regenCooldown = 3;
+            if (maxHp <= healthPoints) {
+                int newHp = Math.min(healthPoints += 20, maxHp);
+                setHealthPoints(newHp);
+            }
+
+            System.out.println("total hp: " + healthPoints);
+            System.out.println("Regen cooldown: " + regenCooldown);
 
         }
-        System.out.println("total hp: " + healthPoints);
-        System.out.println("Regen cooldown: " + regenCooldown);
     }
 
     public void levelUp() {

@@ -1,7 +1,13 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.mysql.cj.x.protobuf.MysqlxDatatypes.Array;
 
 public class Koneksi {
     static final String DB_URL = "jdbc:mysql://localhost:3306/game";
@@ -35,5 +41,26 @@ public class Koneksi {
         }
 
         return false;
+    }
+
+    public static ArrayList<ScoreRecord> topScores() {
+        String query = "SELECT * FROM user ORDER BY skor DESC LIMIT 10";
+        ArrayList<ScoreRecord> topScores = new ArrayList<>();
+
+        try (Connection connection = getKoneksi();
+                Statement stmt = connection.createStatement();) {
+            ResultSet rs = stmt.executeQuery(query);
+
+            while (rs.next()) {
+                topScores.add(new ScoreRecord(rs.getString("nama"), rs.getTimestamp("tgl_main"), rs.getInt("skor")));
+            }
+
+        } catch (
+
+        SQLException e) {
+            e.printStackTrace();
+        }
+        return topScores;
+
     }
 }

@@ -5,12 +5,13 @@
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.HashMap;
+import java.util.InputMismatchException;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-
 
 public class Game {
 
@@ -29,13 +30,13 @@ public class Game {
         initEnemy();
         try {
             connection = Koneksi.getKoneksi();
-            if(connection != null) {
+            if (connection != null) {
                 stmt = connection.createStatement();
             }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-    } 
+    }
 
     private void initEnemy() {
         enemies.clear();
@@ -167,6 +168,8 @@ public class Game {
     public void endGame() {
         Timestamp dateTime = new Timestamp(System.currentTimeMillis());
         Koneksi.insertRow(mainCharacter.getName(), dateTime, totalPoint);
+        ArrayList<ScoreRecord> topScores = Koneksi.topScores();
+        ScoreRecord.showList(topScores);
     }
 
     private void bossFight(Boss boss) {
@@ -185,7 +188,6 @@ public class Game {
                 totalTurns++;
                 bossSkill++;
             }
-            System.out.println("total turns: " + bossSkill);
             battleChoice(boss);
 
             if (mainCharacter.getHealthPoints() <= 0) {
@@ -196,7 +198,7 @@ public class Game {
             if (boss.getHealthPoints() <= 0) {
                 System.out.println("Kamu telah mengalahkan naga " + boss.getName());
                 System.out.println(
-                "\nDengan naga yang telah dikalahkan, negeri pun menghela napas lega. Sang pahlawan berdiri dengan penuh kemenangan, perjalanannya penuh keberanian dan kekuatan kini menjadi legenda yang akan diceritakan sepanjang masa. Saat fajar menyingsing, mereka tahu kedamaian telah kembali, dan nama mereka akan dikenang selamanya.");
+                        "\nDengan naga yang telah dikalahkan, negeri pun menghela napas lega. Sang pahlawan berdiri dengan penuh kemenangan, perjalanannya penuh keberanian dan kekuatan kini menjadi legenda yang akan diceritakan sepanjang masa. Saat fajar menyingsing, mereka tahu kedamaian telah kembali, dan nama mereka akan dikenang selamanya.");
                 totalPoint += 300;
                 moveToNextStage();
                 endGame();
@@ -204,7 +206,7 @@ public class Game {
         }
     }
 
-    private void battleChoice(Enemy enemy) {
+    private void battleChoice(ArrayList<Enemy> enemies) {
         System.out.println("============================");
         System.out.println("Pilih aksi: ");
         System.out.println("1. Serang");
@@ -215,10 +217,10 @@ public class Game {
 
         Scanner scn = new Scanner(System.in);
         int choice = scn.nextInt();
-
         switch (choice) {
             case 1:
-                mainCharacter.attack(enemy);
+
+                mainCharacter.attack(enemyChoice(enemies));
                 totalTurns++;
                 break;
 
@@ -227,7 +229,68 @@ public class Game {
                 break;
 
             case 3:
-                mainCharacter.useSkill(enemy);
+                mainCharacter.useSkill(enemyChoice(enemies));
+                break;
+            case 4:
+                mainCharacter.statusCheck();
+            default:
+                break;
+        }
+    }
+
+    private Enemy enemyChoice(ArrayList<Enemy> enemies) {
+        Scanner scn = new Scanner(System.in);
+        int enemyChosen = -1;
+        boolean inputValid = false;
+
+        while (!inputValid) {
+            try {
+
+                System.out.println("\nPilih musuh yang kamu ingin serang");
+                for (Enemy enemy : enemies) {
+                    System.out.println((enemies.indexOf(enemy) + 1) + ". " + enemy.name);
+
+                }
+                System.out.print("-> ");
+                enemyChosen = scn.nextInt();
+
+                if (enemyChosen < 1 || enemyChosen > enemies.size()) {
+                    System.out.println("inputan salah");
+                } else {
+                    inputValid = true;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("input salah, masukkan angka.");
+                scn.next();
+            }
+        }
+
+        return enemies.get(enemyChosen - 1);
+    }
+
+    private void battleChoice(Boss boss) {
+        System.out.println("============================");
+        System.out.println("Pilih aksi: ");
+        System.out.println("1. Serang");
+        System.out.println("2. Regen hp");
+        System.out.println("3. Gunakan Skill (Penetrasi Armor)");
+        System.out.println("4. Cek Status");
+        System.out.println("============================");
+
+        Scanner scn = new Scanner(System.in);
+        int choice = scn.nextInt();
+        switch (choice) {
+            case 1:
+                mainCharacter.attack(boss);
+                totalTurns++;
+                break;
+
+            case 2:
+                mainCharacter.regenerate();
+                break;
+
+            case 3:
+                mainCharacter.useSkill(boss);
                 break;
             case 4:
                 mainCharacter.statusCheck();
@@ -239,6 +302,7 @@ public class Game {
     public void battle(ArrayList<Enemy> enemies) {
         boolean isTrue = true;
 
+        int index = 1;
         while (isTrue) {
             boolean enemiesTurn = totalTurns % 2 != 0;
 
@@ -248,8 +312,11 @@ public class Game {
                 }
                 totalTurns++;
             }
-
-            battleChoice(enemies.getFirst());
+            try {
+                battleChoice(enemies);
+            } catch (InputMismatchException e) {
+                System.out.println("Input salah");
+            }
 
             if (!mainCharacter.isAlive()) {
                 System.out.println("Kamu gagal dalam pertempuran");
